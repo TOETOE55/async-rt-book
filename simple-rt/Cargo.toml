@@ -1,0 +1,17 @@
+[package]
+name = "simple-rt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-task = "4.7.0"
+flume = "0.11.0"
+futures = "0.3.30"
+parking = "2.2.0"
+parking_lot = "0.12.1"
+polling = "3.6.0"
+rustix = "0.38.32"
+slab = "0.4.9"
+waker-fn = "1.1.1"
