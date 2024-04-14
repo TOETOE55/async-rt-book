@@ -39,9 +39,10 @@ impl<'a> Executor<'a> {
 
 pub async fn execute(&self) {
     // 不断从队列里取task，并轮询
-    while let Some(runnable) = self.rx.next().await {
-        runnable.run();
-    }
+        let mut rx = self.rx.stream();
+        while let Some(runnable) = rx.next().await {
+            runnable.run();
+        }
 }
 ```
 

@@ -22,6 +22,18 @@ int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout
 
 相对于标准库同步阻塞的IO操作来说，`epoll`把 *等待fd就绪* 这一步单独抽离了出来（也就是上面的第二步），允许同时监听多个fd，且允许超时。**这就允许用额外一个线程就可以处理多个IO事件，或者是通过时间片的方式来处理IO事件。**
 
+不过要注意的是，**`epoll`并不支持普通的文件**，如果把文件fd添加到`epoll`里会返回`EPERM`错误。普通的文件读写需要用到aio或者使用一个线程池把同步转成异步。
+`epoll`目前支持的fd是：
+
+* 网络socket，比如说TCP, UDP等
+* `timerfd`
+* `signalfd`
+* `inotify`
+* pipe
+* 子进程
+* 终端相关，比如`stdin`, `stdout`, `stderr`
+* `epoll`本身（可以加到其它`epoll`实例中）
+* 等等
 
 
 不同的操作系统都有类似的接口，rust里已经有crate进行统一封装，比如说[`mio`](https://crates.io/crates/mio), [`polling`](https://crates.io/crates/polling)。比如说`polling`提供提了以下接口，大体结构与`epoll`一致：
