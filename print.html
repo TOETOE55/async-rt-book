@@ -1,0 +1,1032 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust异步运行时基础部件</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Future.html"><strong aria-hidden="true">1.</strong> Future</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Future的接口.html"><strong aria-hidden="true">1.1.</strong> Future的接口</a></li><li class="chapter-item expanded "><a href="Future的例子.html"><strong aria-hidden="true">1.2.</strong> Future的例子</a></li></ol></li><li class="chapter-item expanded "><a href="block_on.html"><strong aria-hidden="true">2.</strong> block_on</a></li><li class="chapter-item expanded "><a href="Reactor.html"><strong aria-hidden="true">3.</strong> Reactor</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="异步IO与Poller.html"><strong aria-hidden="true">3.1.</strong> 异步IO与poller</a></li><li class="chapter-item expanded "><a href="Reactor的设计.html"><strong aria-hidden="true">3.2.</strong> Reactor的设计</a></li></ol></li><li class="chapter-item expanded "><a href="Executor.html"><strong aria-hidden="true">4.</strong> Executor</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Task.html"><strong aria-hidden="true">4.1.</strong> Task</a></li><li class="chapter-item expanded "><a href="一个完整的Executor例子.html"><strong aria-hidden="true">4.2.</strong> 完整的Executor</a></li></ol></li><li class="chapter-item expanded "><a href="结论.html"><strong aria-hidden="true">5.</strong> 结论</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust异步运行时基础部件</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>目前Rust使用最广的异步运行时是tokio，但tokio是一个十分完整的运行时，对于使用者来说几乎是一个黑盒，除非直接深入其源码，否则无法了解其结构与设计。这又使得tokio又像是一个无缝的蛋，当我们希望定制一些调度规则时，几乎是无从下手。</p>
+<p>而smol作为tokio的“竞争对手”，其接口设计则好多了，将异步运行时拆分成相对独立的且小巧的几块（<code>async-io</code>, <code>async-executor</code>, <code>async-task</code>等等），能学习者能更好地了解异步运行时的结构，也能让使用者方便定制一些特定的规则。</p>
+<p>那么这篇文章，大概顺着smol给出的设计思路，从头实现一个简单但齐全的异步运行时，让大家对异步运行时有一个基础的理解。</p>
+<p>本文代码参考<a href="https://github.com/TOETOE55/async-rt-book/tree/master/simple-rt">这里</a></p>
+<p>（一直想写这篇文章，但耽搁了好久）</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="future"><a class="header" href="#future">Future</a></h1>
+<p>我们还是得从Future讲起，<strong><code>Future</code>是rust中异步编程的最基础的抽象，表示一个异步的计算</strong>。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="future的接口"><a class="header" href="#future的接口">Future的接口</a></h1>
+<p><code>Future</code>的接口采用的是基于轮询的形式，而非更加常见的CPS形式：</p>
+<blockquote>
+<p>为了方便叙述，这里先去掉一些噪音，化简了一下现有接口</p>
+</blockquote>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 异步计算的抽象
+trait Future {
+    type Output;
+    
+    /// 提供一个轮询的接口
+    fn poll(&amp;mut self, waker: Waker) -&gt; Poll&lt;Self::Output&gt;;
+}
+
+/// 轮询的结果
+enum Poll&lt;T&gt; {
+    Pending,
+    Ready(T)
+}
+
+#[derive(Clone)]
+struct Waker { /*...*/ }
+impl Waker {
+    /// 当异步计算有进展时调用，以通知轮询方进行下一轮的轮询
+    fn wake(self);
+}
+<span class="boring">}</span></code></pre></pre>
+<p>我们需要拿到一个<code>Future</code>的值，我们需要不断地调用<code>poll</code>轮询它：</p>
+<ul>
+<li>
+<p>当<code>poll</code>返回<code>Pending</code>的时候，表示<code>Future</code>还没完成，且暂时不需要占用当前控制流。从<code>Future</code>的角度来说，则是让出了当前的控制流，让我们可以做一些其它的事情。</p>
+<blockquote>
+<p>相比于同步阻塞的IO，异步IO当资源未就绪时返回Pending，可以避免陷入内核态，同时能减少上下文切换的开销</p>
+</blockquote>
+</li>
+<li>
+<p>当<code>poll</code>返回<code>Ready</code>的时候，则表示<code>Future</code>的计算已完成。</p>
+</li>
+</ul>
+<p>当然，除了<code>poll</code>以外，还可以取消一个<code>Future</code>，只需要不再轮询它，这时可以选择析构掉<code>Future</code>，释放掉里面的资源（这时对于<code>Future</code>来说，相当于在<code>.await</code>处panic了）。</p>
+<p>其中<code>poll</code>还有一个参数<code>Waker</code>，当<code>Future</code>有进展时，就可以调用<code>.wake()</code>，来通知轮询方继续轮询<code>Future</code>。其中<code>Waker</code>，满足<code>Send</code>和 <code>Sync</code>，意味着<code>.wake()</code>方法可以在任何地方调用，比如说把<code>Waker</code>注册给OS，由OS来调用<code>.wake()</code>。</p>
+<blockquote>
+<p>注意：这个Waker参数并不一定是自上而下传递下来的，也有可能是poll中间构造的，甚至可以来自于别的运行时的。</p>
+</blockquote>
+<p>于是对一个<code>Future</code>求值最基础的程序就长这样：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 轮询future
+loop {
+    match fut.poll(waker) {
+        Pending =&gt; {
+            // 当异步计算不需要占用当前线程控制流的时候，会让出控制流，于是可以做一些其它事情
+        }
+        Ready(r) =&gt; {
+            // 计算完成
+            break r
+        }
+    }
+    
+    // 当`fut`有进一步进展时，可以进一步轮询。
+    if todo!(&quot;fut 有进展&quot;) {
+        continue;
+    }
+}
+
+<span class="boring">}</span></code></pre></pre>
+<p>不过这里补充一点，<code>poll</code>一个<code>Future</code>的策略完全由轮询方来决定，不同的业务场景可以以不同的方式去轮询。<code>Waker</code>不调用的时候也轮询方也可以去<code>poll</code>一个<code>Future</code>；反过来<code>Waker</code>被调用了，也可以不立刻去<code>poll</code>。比如我们可以“马不停蹄”地轮询<code>Future</code></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>loop {
+    // 返回`Pending`时，立刻继续`poll`，直到返回`Ready`，
+    // 对于不希望线程休眠的程序的运行时，就可以这么设计
+    if let Ready(r) = fut.poll(waker) {
+        return r;
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>作为对比，这里简单地把基于CPS变换的异步计算的抽象列在这里：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait Future {
+ type Output;
+
+ /// 1.`schedule`和`callback`不应该阻塞，`callback`可能会被注册到一些地方
+ /// 2. 当异步计算**完成**时，`callback`就会被调用。
+ fn schedule&lt;Callback&gt;(self, callback: Callback)
+ where
+ 	Callback: FnOnce(Self::Output) + Send + Sync
+}
+<span class="boring">}</span></code></pre></pre>
+<p>这时候对<code>Future</code>的求值就和我们在其他语言（比如js）中见到的类似了：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fut.schedule(|output| {
+ // 异步计算完成
+ do_something(output);
+});
+<span class="boring">}</span></code></pre></pre>
+</blockquote>
+<p>其它更复杂的异步接口，在rust里也都可以，（也倾向于）设计成<code>poll_xxx</code>的形式（注：后续所有的waker参数都替换成现在的<code>Context</code>）：</p>
+<ul>
+<li>异步流：<code>fn poll_next(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Option&lt;Self::Item&gt;&gt;</code></li>
+<li>异步读：<code>fn poll_read(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;, buf: &amp;mut [u8]) -&gt; Poll&lt;Result&lt;usize, Error&gt;&gt;</code></li>
+<li>异步写：<code>fn poll_write(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;, buf: &amp;[u8]) -&gt; Poll&lt;Result&lt;usize, Error&gt;&gt;</code></li>
+</ul>
+<p>等等。</p>
+<p><code>Future</code>的接口其实是脱胎于<code>Iterator</code>的接口，都是通过**“外部”**轮询的方式来获取下一步结果，<strong>同样也可以造出很多不同功能的组合子</strong>（也可以叫Adapter）。相对于传统回调的方式，这种方式更符合Rust的哲学——<em>零开销抽象</em>，同时在borrow checker下这样的接口也更易使用一些。</p>
+<p>这里更深入的讨论就不展开了，大家有兴趣可以看一下这些资料：</p>
+<ul>
+<li>
+<p><a href="https://without.boats/blog/why-async-rust/">Why async Rust?</a></p>
+</li>
+<li>
+<p><a href="https://aturon.github.io/blog/2016/09/07/futures-design/">Designing futures for Rust</a></p>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="future的例子"><a class="header" href="#future的例子">Future的例子</a></h1>
+<p>刚刚通过接口的形式来介绍<code>Future</code>，那么我们怎么实现一个<code>Future</code>呢？除了<code>async {}</code>这种由编译器生成的<code>Future</code>以外，这里稍微给几个简单的例子。</p>
+<h2 id="yield_now"><a class="header" href="#yield_now"><code>yield_now()</code></a></h2>
+<p>第一次轮询时返回<code>Pending</code>，第二次轮询时就绪。用于临时交还控制流用：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct YieldNow {
+    is_ready: bool
+}
+
+impl Future for YieldNow {
+    type Output = ();
+    
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;()&gt; {
+        if self.is_ready {
+            return Poll::Ready(());
+        }
+        
+        self.is_ready = true;
+        // 通知调用方，自己有“进展”
+        cx.waker().wake_by_ref();
+        // 交还控制流
+        Poll::Pending
+    }
+}
+
+pub async fn yield_now() {
+    YieldNow { is_ready: false }.await
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="stdin"><a class="header" href="#stdin">stdin</a></h2>
+<p>这个例子通过多线程模拟异步的IO，这里以stdin为例子（Rust标准库里的<code>Stdin</code>是同步阻塞的）：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 提交到stdin线程处理的任务
+struct StdinTask {
+    buf: Mutex&lt;Box&lt;[u8]&gt;&gt;,
+    waker: AtomicWaker,
+    res: Mutex&lt;Option&lt;io::Result&lt;usize&gt;&gt;&gt;,
+}
+
+fn task_sender() -&gt; &amp;'static Sender&lt;Arc&lt;StdinTask&gt;&gt; {
+    static SENDER: OnceCell&lt;Sender&lt;Arc&lt;StdinTask&gt;&gt;&gt; = OnceCell::new();
+    SENDER.get_or_init_bloking(|| {
+        let (tx, rx) = mpsc::channel();
+        // 单起一个线程来处理stdin的读任务
+        thread::spawn(move || {
+            for mut task in rx {
+                // 同步阻塞地读stdin
+                let res = stdin().read(&amp;mut task.buf.lock());
+                // 将读的结果塞回去
+                *task.res.lock() = Some(res);
+                // 通知已完成
+           		task.waker.take().map(Waker::wake);
+            }
+        }).unwrap();
+        
+        tx
+    })
+}
+
+
+impl StdinTask {
+    fn poll_read(&amp;self, cx: &amp;mut Contex&lt;'_&gt;) -&gt; Poll&lt;()&gt; {
+        // 检查任务是否完成
+        if let Some(res) = self.res.lock() {
+            return Poll::Ready(())
+        }
+        
+        // 重新注册一遍waker，因为有可能不是同一个运行时poll了。
+        self.waker.register(cx.waker().clone());
+        Poll::Pending
+    }
+}
+
+// 对外提供的接口
+pub async fn read_stdin(buf: Box&lt;[u8]&gt;) -&gt; io::Result&lt;(usize, Box&lt;u8&gt;)&gt; {
+    let task = Arc::new(StdinTask {
+        buf: Mutex::new(buf),
+        waker: AtomicWaker::new(),
+        res: Mutex::new(None),
+    });
+    
+    // 发送到stdin线程处理
+    task_sender().send(task.clone()).unwrap();
+    
+    // 等待task被处理完
+    poll_fn(|cx| task.poll_read(cx)).await;
+    
+    // 返回读的结果
+    let task = Arc::try_unwrap(task).unwrap();
+    res.map(|i| (i, task.buf.into_inner()))
+}
+
+<span class="boring">}</span></code></pre></pre>
+<p>但这种用线程来模拟异步io的方式开销会比较大，我们需要通过系统提供的异步io来进行改进。</p>
+<h2 id="join组合子"><a class="header" href="#join组合子"><code>join</code>组合子</a></h2>
+<p>我们有了前面“单功能”的<code>Future</code>之后，我们还可以通过写一些组合子去把他们组合起来。比如<code>join</code>组合子用于并发执行多个<code>Future</code>，直到所有的<code>Future</code>都完成。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[pin_project]
+struct Join&lt;FA, FB&gt; 
+where
+	FA: Future,
+	FB: Future,
+{
+    #[pin]
+    fut_a: Option&lt;FA&gt;,
+    a: Option&lt;&lt;FA as Future&gt;::Output&gt;,
+    #[pin]
+    fut_b: Option&lt;FB&gt;,
+    b: Option&lt;&lt;FB as Future&gt;::Output&gt;,
+}
+
+impl&lt;FA, FB&gt; Join&lt;FA, FB&gt;
+where
+	FA: Future,
+	FB: Future,
+{
+    type Output = (FA::Output, FB::Output);
+    
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Self::Output&gt; {
+        let this = self.project();
+        
+        
+        loop {
+            // 当a fut未完成时poll
+            if let Some(fut_a) = this.fut_a.as_pin_mut() {
+                if let Poll::Ready(a) = fut_a.poll(cx) {
+                    this.a = Some(a);
+      				this.fut_a.set(None);
+                    continue;
+                }
+            }
+            // 当b fut未完成时poll
+            if let Some(fut_b) = this.fut_b.as_pin_mut() {
+                if let Poll::Ready(b) = fut_b.poll(cx) {
+                    this.b = Some(b);
+      				this.fut_b.set(None);
+                }
+            }
+            
+            // 当两个future都成功时返回Ready
+            // 否则返回Pending
+            if let (Some(a), Some(b)) = (this.a, this.b) {
+                return Poll::Ready((this.a.take().unwrap(), this.b.take().unwrap()));
+            } else {
+                return Poll::Pending;
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="block_on"><a class="header" href="#block_on">block_on</a></h1>
+<p>前面花了比较大的笔墨在介绍<code>Future</code>上。现在终于可以去聊聊异步运行时的事了。</p>
+<p>异步运行时的最低要求是可以求值一个<code>Future</code>，这个接口的签名写起来就是：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 阻塞地求值一个`Future`，并把future的结果返回出来
+fn block_on&lt;T&gt;(fut: impl Future&lt;Output = T&gt;) -&gt; T;
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>因为rust本身的运行时只能直接调用同步的接口，所以提供一个同步的<code>block_on</code>接口是必要的，作为“异步转同步”的入口。</p>
+</blockquote>
+<p>按照上面<code>Future</code>求值的模板，如果除了求值<code>Future</code>之外什么都不干的话，我们就可以在<code>poll</code>一个<code>Future</code>返回<code>Pending</code>时，休眠线程：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn block_on&lt;T&gt;(fut: impl Future&lt;Output = T&gt;) -&gt; T {
+    // 当前线程的`parker`和`unparker`
+    let (parker, unparker) = parking::pair();
+    // waker在调用`.wake()`时unpark当前线程
+    let waker = waker_fn(move || { unparker.unpark(); });
+    let cx = &amp;mut Context::from_waker(&amp;waker);
+    
+    // 轮询`Future`
+    let mut fut = pin!(fut);
+    loop {
+        if let Poll::Ready(t) = fut.as_mut().poll(cx) {
+            return t;
+        }
+        
+        // 返回`Pending`就休眠线程，等待`waker`被调用
+        // 注：如果waker已经被调用过了，这里就不会阻塞。
+        parker.park()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>这就是<code>block_on</code>最基础的实现（当然如果在嵌入式里没有park/unpark，也只有单线程的情况下就另当别论），也是一个异步运行时最简单的形式。之后我们在这个基础上不断添加新的东西来完善它。</p>
+<p>有了<code>block_on</code>我们就可以写一个简单的异步程序了：</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    // 读一次stdin，并打印
+    let fut_a = async {
+        let mut buf = Box::&lt;[u8]&gt;::from([0;100]);
+        let mut i = 0;
+        (i, buf) = read_stdin(buf).await?;
+        println!(&quot;{:?}&quot;, String::from_utf8_lossy(&amp;buf[..i]));
+        Ok(())
+    };
+    
+    let fut_b = async {
+        yield_now().await;
+        println!(&quot;yield 1&quot;);
+        yield_now().await;
+        println!(&quot;yield 2&quot;);
+    };
+    
+    // 并发执行fut_a, fut_b
+    let fut = join(fut_a, fut_b);
+    
+    // 执行fut
+    block_on(fut);
+}</code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="reactor"><a class="header" href="#reactor">Reactor</a></h1>
+<p>因为rust标准库自带的IO默认都是同步且阻塞的（除了socket可以设置为non blocking模式），这就意味着我们需要有额外的线程来处理IO，才能让IO Future不阻塞在当前线程，就像刚刚异步的我们自己封装的stdin一样，而且单个线程也只能处理一个fd的IO操作。当我们有很多不同类型的IO要处理的时候，要么效率很低（单线程逐个处理），要么开销很高（开很多个线程处理IO）</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="异步io与poller"><a class="header" href="#异步io与poller">异步IO与Poller</a></h1>
+<p>既然标准库没有异步的IO接口，我们把目标转向OS自身提供的异步IO接口，比如linux下的<code>epoll</code>。<code>epoll</code>主要提供了三个接口：</p>
+<pre><code class="language-c">/// 创建新的epoll实例
+int epoll_create(int size);
+
+/// 向 epoll 实例中添加、修改或删除文件描述符
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event * event);
+
+/// 等待 epoll 实例中的文件描述符准备就绪。
+/// 这个函数会阻塞调用线程，到存在文件描述符就绪。
+int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
+</code></pre>
+<p>核心思路是：</p>
+<ol>
+<li>把“关心”的IO的fd添加到<code>epoll</code>实例中（比如关心fd是否能写）</li>
+<li>然后调用<code>epoll_wait</code>，阻塞调用线程到存在关心的fd已就绪时，线程继续运行。</li>
+<li>这时候就能直接给已就绪的fd进行IO操作。</li>
+</ol>
+<p>相对于标准库同步阻塞的IO操作来说，<code>epoll</code>把 <em>等待fd就绪</em> 这一步单独抽离了出来（也就是上面的第二步），允许同时监听多个fd，且允许超时。<strong>这就允许用额外一个线程就可以处理多个IO事件，或者是通过时间片的方式来处理IO事件。</strong></p>
+<p>不过要注意的是，<strong><code>epoll</code>并不支持普通的文件</strong>，如果把文件fd添加到<code>epoll</code>里会返回<code>EPERM</code>错误。普通的文件读写需要用到aio或者使用一个线程池把同步转成异步。
+<code>epoll</code>目前支持的fd是：</p>
+<ul>
+<li>网络socket，比如说TCP, UDP等</li>
+<li><code>timerfd</code></li>
+<li><code>signalfd</code></li>
+<li><code>inotify</code></li>
+<li>pipe</li>
+<li>子进程</li>
+<li>终端相关，比如<code>stdin</code>, <code>stdout</code>, <code>stderr</code></li>
+<li><code>epoll</code>本身（可以加到其它<code>epoll</code>实例中）</li>
+<li>等等</li>
+</ul>
+<p>不同的操作系统都有类似的接口，rust里已经有crate进行统一封装，比如说<a href="https://crates.io/crates/mio"><code>mio</code></a>, <a href="https://crates.io/crates/polling"><code>polling</code></a>。比如说<code>polling</code>提供提了以下接口，大体结构与<code>epoll</code>一致：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Poller实例，
+/// * linux下是epoll实例
+/// * mac, iOS下是kqueue实例
+/// * windows下是iocp实例
+struct Poller { /*...*/ } 
+
+impl Poller {
+    /// 创建一个poller实例
+    pub fn new() -&gt; Result&lt;Poller&gt;;
+    
+    /// 往poller实例中添加fd，及关心的事件
+    pub unsafe fn add(
+        &amp;self,
+        /// unix下是fd, windows下是socket
+        source: impl AsRawSource,
+        interest: Event
+    ) -&gt; Result&lt;()&gt;;
+    
+    /// 更新fd关心的事件，
+    /// 比如关心fd是否可读，改成是否可写
+    pub fn modify(&amp;self, source: impl AsSource, interest: Event) -&gt; Result&lt;()&gt;;
+    
+    /// 删除关心的fd
+    pub fn delete(&amp;self, source: impl AsSource) -&gt; Result&lt;()&gt;;
+    
+    /// 阻塞调用线程直到
+    /// * 存在关心的fd就绪，或
+    /// * 超时
+    /// * 唤醒poller实例
+    pub fn wait(
+        &amp;self,
+        events: &amp;mut Events,
+        /// * `None`为不设置超时
+        /// * `Some(0)`为不阻塞
+        timeout: Option&lt;Duration&gt;
+    ) -&gt; Result&lt;usize&gt;;
+    
+    /// 唤醒poller实例
+    pub fn notify(&amp;self) -&gt; Result&lt;()&gt;;
+}
+<span class="boring">}</span></code></pre></pre>
+<p>这是<code>polling</code>库的Example（截自README）</p>
+<blockquote>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use polling::{Event, Poller};
+use std::net::TcpListener;
+
+// Create a TCP listener.
+let socket = TcpListener::bind(&quot;127.0.0.1:8000&quot;)?;
+socket.set_nonblocking(true)?;
+let key = 7; // Arbitrary key identifying the socket.
+
+// Create a poller and register interest in readability on the socket.
+let poller = Poller::new()?;
+poller.add(&amp;socket, Event::readable(key))?;
+
+// The event loop.
+let mut events = Vec::new();
+loop {
+// Wait for at least one I/O event.
+events.clear();
+ poller.wait(&amp;mut events, None)?;
+
+ for ev in &amp;events {
+  if ev.key == key {
+         // Perform a non-blocking accept operation.
+         socket.accept()?;
+         // Set interest in the next readability event.
+         poller.modify(&amp;socket, Event::readable(key))?;
+     }
+ }
+}
+<span class="boring">}</span></code></pre></pre>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="reactor的设计"><a class="header" href="#reactor的设计">Reactor的设计</a></h1>
+<blockquote>
+<p>参考</p>
+<ul>
+<li>
+<p><a href="https://github.com/smol-rs/async-io">async-io</a></p>
+</li>
+<li>
+<p><a href="https://blog.yoshuawuyts.com/building-an-async-runtime-for-wasi/">Designing an Async Runtime for WASI 0.2</a></p>
+</li>
+</ul>
+</blockquote>
+<p>我们借助<code>polling</code>库，来实现一个reactor，提供统一管理IO的注册、IO事件监听以及唤醒的功能。</p>
+<p>基础的设计是：</p>
+<ol>
+<li>有一个event loop不断监听注册在Reactor中的IO事件，当IO事件有响应时，调用对应的Waker</li>
+<li>被<code>block_on</code>求值的IO future，向Reactor注册IO事件（包括waker）</li>
+</ol>
+<p><img src="./images/reactor.png" alt="reactor" /></p>
+<p>这里<code>Reactor</code>最简单提供两个接口，<code>event_loop</code>和<code>register_readable</code>：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Reactor实例
+pub struct Reactor {
+    // Poller实例
+    poller: Poller,
+    // 存储
+    repo: Mutex&lt;Slab&lt;Arc&lt;IOEvent&gt;&gt;&gt;,
+}
+
+// 代表一个IO
+struct IOEvent {
+    fd: RawFd,
+    key: usize,
+    is_ready: AtomicBool,
+    waker: AtomicWaker,
+}
+
+
+impl Reactor {
+    // IO事件循环
+    // 当存在fd就绪时，调用注册的waker
+    pub fn event_loop(&amp;self) -&gt; io::Result&lt;()&gt;;
+    
+    // 注册一个可读事件
+    // 当fd可读时返回
+    pub async fn register_readable(&amp;self, fd: BorrowedFd&lt;'_&gt;) -&gt; io::Result&lt;()&gt;;
+}
+<span class="boring">}</span></code></pre></pre>
+<p>先来看看<code>event_loop</code>的实现，其做的事情就是：</p>
+<ol>
+<li>等待注册的IO就绪，</li>
+<li>调用对应的waker</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn event_loop(&amp;self) -&gt; io::Result&lt;()&gt; {
+    let mut events = Events::new();
+
+    loop {
+        events.clear();
+        // 等待注册到poller的IO就绪
+        match self.poller.wait(&amp;mut events, None) {
+            Ok(0) =&gt; {},
+            Ok(_) =&gt; {
+                let repo = self.repo.lock();
+                for ev in events.iter() {
+                    // 调用waker
+                    if let Some(event) = repo.get(ev.key) {
+                        event.waker.take().map(Waker::wake);
+                        event.is_ready.swap(true, Ordering::Release);
+                    }
+                }
+                Ok(())
+            }
+            Err(err) if err.kind() == ErrorKind::Interrupted =&gt; {},
+            Err(err) =&gt; return Err(err),
+        }
+    }
+    
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<p>然后这里的注册的代码，写为一个异步函数，也方便通过RAII的方式去反注册：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span> // 注册可读fd，直到fd就绪
+pub async fn register_readable(&amp;self, fd: BorrowedFd&lt;'_&gt;) -&gt; io::Result&lt;()&gt; {
+    // IO RAII
+    struct IOGuard&lt;'r&gt; {
+        reactor: &amp;'r Reactor,
+        event: Arc&lt;IOEvent&gt;,
+    }
+
+    impl&lt;'r&gt; IOGuard&lt;'r&gt; {
+        // 构造FdGuard，并将fd注册到reactor中
+        fn new(reactor: &amp;'r Reactor, fd: BorrowedFd&lt;'_&gt;) -&gt; io::Result&lt;Self&gt; {
+            let event = {
+                let mut repo = reactor.repo.lock();
+                let entry = repo.vacant_entry();
+                let event = Arc::new(IOEvent {
+                    fd: fd.as_raw_fd(),
+                    key: entry.key(),
+                    is_ready: AtomicBool::new(false),
+                    waker: AtomicWaker::new(),
+                });
+
+                entry.insert(event.clone());
+                event
+            };
+
+            // fd注册到poller里
+            if let Err(err) =
+                unsafe { reactor.poller.add(event.fd, Event::readable(event.key)) }
+            {
+                let mut repo = reactor.repo.lock();
+                repo.remove(event.key);
+                return Err(err);
+            }
+
+            Ok(Self { reactor, event })
+        }
+    }
+
+    // 当完成或者取消时自动反注册
+    impl Drop for IOGuard&lt;'_&gt; {
+        fn drop(&amp;mut self) {
+            let mut repo = self.reactor.repo.lock();
+            repo.remove(self.event.key);
+            self.reactor
+                .poller
+                .delete(unsafe { BorrowedFd::borrow_raw(self.event.fd) })
+                .ok();
+        }
+    }
+
+    let io_guard = IOGuard::new(self, fd)?;
+
+    poll_fn(|cx| {
+        let event = &amp;*io_guard.event;
+        // 等待reactor唤醒并改变状态
+        if event.is_ready.load(Ordering::Acquire) {
+            return Poll::Ready(Ok(()));
+        }
+
+        // 每次poll别忘记更新waker
+        event.waker.register(cx.waker());
+
+        Poll::Pending
+    })
+    .await
+}
+<span class="boring">}</span></code></pre></pre>
+<p>这个<code>register_readable</code>是用于IO future的实现的，这里仍然以stdin为例子：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 异步的stdin
+pub struct Stdin&lt;'r&gt; {
+    reactor: &amp;'r Reactor,
+    stdin: io::Stdin,
+}
+
+impl&lt;'r&gt; Stdin&lt;'r&gt; {
+    pub fn new(reactor: &amp;'r Reactor) -&gt; io::Result&lt;Self&gt; {
+        let this = Self {
+            reactor,
+            stdin: io::stdin(),
+        };
+        // 设置为异步的IO，
+        // 之后阻塞时通过Read::read返回的错误码为WouldBlock
+        rustix::io::ioctl_fionbio(&amp;this.stdin, true)?;
+
+        Ok(this)
+    }
+
+    pub async fn read(&amp;self, buf: &amp;mut [u8]) -&gt; io::Result&lt;usize&gt; {
+        loop {
+            // 尝试读stdin
+            match self.stdin.lock().read(buf) {
+                Err(err) if err.kind() == io::ErrorKind::WouldBlock =&gt; {}
+                res =&gt; return res,
+            }
+            // 如果被阻塞则等待stdin就绪
+            self.reactor.register_readable(self.stdin.as_fd()).await?;
+        }
+    }
+}
+
+<span class="boring">}</span></code></pre></pre>
+<p>有了<code>Reactor</code>，我们就可以单独跑一个线程来管理多个IO的注册与唤醒了，到这里才能体现出异步在IO密集的应用上的优势。虽然和前面的stdin实现都创建了一个额外的线程处理IO事件，但这里可以同时处理多个不同类型的IO，实现了所谓的IO的“复用”。</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let reactor = Reactor::new();
+
+thread::scoped(|s| {
+    // reactor io线程，用于处理IO事件
+    s.spawn(|| reactor.event_loop().unwrap());
+    
+    // 其它线程拿到Reactor可以用于创建IO对象
+    s.spawn(|| {
+        block_on(async {
+            let mut buf = [0; 1000];
+            let mut buf = &amp;mut buf[..];
+            let stdin = Stdin::new(reactor)?;
+
+            while buf.len() &gt; 0 {
+                let x = stdin.read(buf).await?;
+                println!(&quot;from stdin: {:?}&quot;, String::from_utf8_lossy(&amp;buf[..x]));
+
+                buf = &amp;mut buf[x..];
+                yield_now().await;
+                
+                println!(&quot;yielding&quot;);
+            }
+
+            println!(&quot;end&quot;);
+            Ok(())
+        })
+    });
+});
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>注：其实reactor的事件循环可以和block_on的轮询集成到一个循环里，这样甚至不需要多开一个线程。通过向reactor里注册一个特定的fd，在waker里进行IO操作，可以唤醒reactor。</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="executor"><a class="header" href="#executor">Executor</a></h1>
+<p>不过到目前为止，我们求值Future还是只有<code>block_on</code>函数，只能在单个线程上搞并发（通过<code>join</code>这些组合子），虽然在不少平台上这已经足够了（比如wasm目前多线程还没搞好，只有单线程），但在很多平台上却无法利用多线程的优势。</p>
+<p>于是我们希望可以实现一个朴素的策略，利用多线程来poll Future：</p>
+<ol>
+<li>把<code>Future</code>丢到队列里，</li>
+<li>线程池里的空闲的线程则在队列中取<code>Future</code>轮询一次，然后晾一边，</li>
+<li>等待<code>Future</code>的waker被调用，丢到队列里。</li>
+</ol>
+<p>（图懒得画，大家自己脑补）</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="task"><a class="header" href="#task">Task</a></h1>
+<p>我们把“等待Future的waker被调用，然后又丢到队列里”，这个部分单独抽出来，这个步骤称之为一次调度，被调度的称为一个<code>Task</code>。</p>
+<p><code>async_task</code>已经为我们封装好了这个抽象，它提供的核心接口为：</p>
+<ul>
+<li><code>spawn</code> 创建一个task</li>
+<li><code>Runnable::run</code> poll 一下 task中的future</li>
+<li><code>schedule</code> 当task中的future被唤醒时，把task传到调度器里</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 接受一个`Future`和`schedule`创建一个`Task`
+pub fn spawn&lt;F, S&gt;(future: F, schedule: S) -&gt; (Runnable, Task&lt;F::Output&gt;)
+where
+    // 因为Future可以丢到任何线程中执行，所以要求Send
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+    // 因为schedule可以被任何地方随时调用，所以要求Send + Sync
+    S: Fn(Runnable) + Send + Sync + 'static;
+
+impl Runnable {
+    // 执行一遍Future::poll()
+    // 当wake被调用时，将task传到schedule里
+    pub fn run(self) -&gt; bool;
+    
+    // 直接把task传给schedule
+    pub fn schedule(self);
+}
+
+// 当Future完成后，才会唤醒一次poll task的运行时
+impl&lt;T&gt; Future for Task&lt;T&gt; {
+    /*...*/
+}
+<span class="boring">}</span></code></pre></pre>
+<p>比如当<code>schedule</code>的作用是将task丢到队列里，就可以写成：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let (tx, rx) = channel();
+// 把task丢到队列里
+let schedule = move |runnable| tx.send(runnable).unwrap();
+
+// 创建一个task
+let (runnable, task) = async_task::spawn(yield_now(), schedule);
+
+// 执行一遍poll，
+// 当waker被调用时，就会把task传给schedule
+runnable.run();
+
+// 这里task没法完成，因为传到队列里后没有人执行
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>这里插入一些个人的想法：</p>
+<p>rust在客户端最常见的使用方式之一就是作为跨端的业务层使用，被上层业务代码所调用。比如UIKit(iOS), Android等。
+这些 <em>宿主</em> 通常都会自带一个异步的运行时。
+利用<code>async_task</code>我们甚至可以利用“宿主语言”的异步运行时进行调度。</p>
+</blockquote>
+<p>至于<code>async_task</code>是如何实现的，这里就不做太多展开了，大家可以直接去看源码。这里做点提示，这里<code>Task</code>, <code>Runnable</code>以及<code>Waker</code>背后都指向创建时的Future+schedule，因为职责不一样所以提供的方法不一样：</p>
+<ol>
+<li><code>Task</code>用于看future是否完成，以及取最终结果</li>
+<li><code>Runnable</code>用于执行<code>Future::poll</code></li>
+<li><code>Waker</code>用于把Task传给<code>schedule</code></li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="一个完整的executor的例子"><a class="header" href="#一个完整的executor的例子">一个完整的Executor的例子</a></h1>
+<p>这里的<code>Executor</code>提供两个核心的接口：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Executor&lt;'a&gt; {
+    /// 这里用的是异步mpmc channel
+    tx: Sender&lt;Runnable&gt;,
+    rx: Receiver&lt;Runnerble&gt;,
+    
+    /// Makes the `'a` lifetime invariant.
+    _marker: PhantomData&lt;std::cell::UnsafeCell&lt;&amp;'a ()&gt;&gt;,
+}
+
+impl&lt;'a&gt; Executor&lt;'a&gt; {
+    // 创建一个Task，并丢到Executor中
+    pub fn spawn&lt;T: Send + 'a&gt;(&amp;self, future: impl Future&lt;Output = T&gt; + Send + 'a) -&gt; Task&lt;T&gt;;
+    
+    // 当executor里有新的task时，就会拿出来执行
+    pub async fn execute(&amp;self);
+}
+<span class="boring">}</span></code></pre></pre>
+<p>有了<code>async_task</code>我们就很容易实现这两个接口：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span> pub fn spawn&lt;T: Send + 'a&gt;(&amp;self, future: impl Future&lt;Output = T&gt; + Send + 'a) -&gt; Task&lt;T&gt; {
+     let tx = self.tx.clone();
+     let schedule = move |runnable| tx.send(runnable).unwrap();
+     
+     // 创建一个task，并直接丢到队列里
+     let (runnable, task) = unsafe { async_task::spawn_unchecked(future, schedule) };
+     runnable.schedule();
+     
+     task
+}
+
+pub async fn execute(&amp;self) {
+    // 不断从队列里取task，并轮询
+        let mut rx = self.rx.stream();
+        while let Some(runnable) = rx.next().await {
+            runnable.run();
+        }
+}
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>注：同<code>Reactor::event_loop</code>，<code>Executor::execute</code>也可以集成到<code>block_on</code>中。</p>
+</blockquote>
+<p>有了<code>Executor</code>我们就可以利用多个线程来并发执行异步代码了：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let reactor = Reactor::new();
+let executor = Executor::new();
+
+thread::scope(|s| {
+    // reactor io线程，用于处理IO事件
+    s.spawn(|| reactor.event_loop().unwrap());
+    
+    // 起8个线程作为线程池，来并发执行task
+    for _ in 0..8 {
+        s.spawn(|| {
+            block_on(executor.execute());
+        });
+    }
+    
+    // 创建异步任务，丢到Executor中执行
+    executor.spawn(async {
+        let mut buf = [0; 1000];
+        let mut buf = &amp;mut buf[..];
+        let stdin = Stdin::new(reactor).unwrap();
+
+        while buf.len() &gt; 0 {
+            let x = stdin.read(buf).await.unwrap();
+            println!(&quot;from stdin: {:?}&quot;, String::from_utf8_lossy(&amp;buf[..x]));
+
+            buf = &amp;mut buf[x..];
+        }
+    }).detach();
+    
+    // 这个也会丢到Executor，然后被并发执行
+    executor.spawn(async {
+        yield_now().await;
+        println!(&quot;yield 1&quot;);
+        yield_now().await;
+        println!(&quot;yield 2&quot;);
+    }).detach();
+    
+});
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="结论"><a class="header" href="#结论">结论</a></h1>
+<p>至此，我们已经获得了一个功能相对完整的异步运行时了。这里将异步运行时打碎成<code>block_on</code>, <code>Reactor</code>, <code>Executor</code>三个最基础的组件，其实我们已经拥有了几乎没有上限的定制运行时的能力，我们完全可以控制Future的执行时机，可以拥有什么权限等等。</p>
+<p>可惜，现在tokio当道，tokio则几乎没有定制的能力，作为使用者没法拒绝得了tokio全家桶，哎。</p>
+<p>最后画一个图来总结下</p>
+<p><img src="./images/relation.png" alt="relation" /></p>
+<ol>
+<li>异步运行时最基础的一个功能是<code>block_on()</code>，对一个<code>Future</code>进行求值，其最简单实现就是对<code>Future</code>进行轮询<code>poll</code>。</li>
+<li>我们通过引入一个<code>Reactor</code>（一个IO的event loop），获得了异步IO的能力，比如文件读写、Timer等。</li>
+<li>然后我们再加入一个<code>Executor</code>时（利用多线程对Task进行调度），我们就获得了多线程并发的能力，也就是<code>spawn()</code>接口。</li>
+<li>同时有了<code>block_on()</code>, <code>Executor</code>和<code>Reactor</code>之后，我们就能获得一个功能相对完整的异步运行时。（当然，不一定要有<code>Executor</code>和<code>Reactor</code>这两个抽象，tokio就是将两者合二为一）</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

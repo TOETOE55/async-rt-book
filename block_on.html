@@ -1,0 +1,255 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>block_on - Rust异步运行时基础部件</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Future.html"><strong aria-hidden="true">1.</strong> Future</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Future的接口.html"><strong aria-hidden="true">1.1.</strong> Future的接口</a></li><li class="chapter-item expanded "><a href="Future的例子.html"><strong aria-hidden="true">1.2.</strong> Future的例子</a></li></ol></li><li class="chapter-item expanded "><a href="block_on.html" class="active"><strong aria-hidden="true">2.</strong> block_on</a></li><li class="chapter-item expanded "><a href="Reactor.html"><strong aria-hidden="true">3.</strong> Reactor</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="异步IO与Poller.html"><strong aria-hidden="true">3.1.</strong> 异步IO与poller</a></li><li class="chapter-item expanded "><a href="Reactor的设计.html"><strong aria-hidden="true">3.2.</strong> Reactor的设计</a></li></ol></li><li class="chapter-item expanded "><a href="Executor.html"><strong aria-hidden="true">4.</strong> Executor</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="Task.html"><strong aria-hidden="true">4.1.</strong> Task</a></li><li class="chapter-item expanded "><a href="一个完整的Executor例子.html"><strong aria-hidden="true">4.2.</strong> 完整的Executor</a></li></ol></li><li class="chapter-item expanded "><a href="结论.html"><strong aria-hidden="true">5.</strong> 结论</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust异步运行时基础部件</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="block_on"><a class="header" href="#block_on">block_on</a></h1>
+<p>前面花了比较大的笔墨在介绍<code>Future</code>上。现在终于可以去聊聊异步运行时的事了。</p>
+<p>异步运行时的最低要求是可以求值一个<code>Future</code>，这个接口的签名写起来就是：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 阻塞地求值一个`Future`，并把future的结果返回出来
+fn block_on&lt;T&gt;(fut: impl Future&lt;Output = T&gt;) -&gt; T;
+<span class="boring">}</span></code></pre></pre>
+<blockquote>
+<p>因为rust本身的运行时只能直接调用同步的接口，所以提供一个同步的<code>block_on</code>接口是必要的，作为“异步转同步”的入口。</p>
+</blockquote>
+<p>按照上面<code>Future</code>求值的模板，如果除了求值<code>Future</code>之外什么都不干的话，我们就可以在<code>poll</code>一个<code>Future</code>返回<code>Pending</code>时，休眠线程：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn block_on&lt;T&gt;(fut: impl Future&lt;Output = T&gt;) -&gt; T {
+    // 当前线程的`parker`和`unparker`
+    let (parker, unparker) = parking::pair();
+    // waker在调用`.wake()`时unpark当前线程
+    let waker = waker_fn(move || { unparker.unpark(); });
+    let cx = &amp;mut Context::from_waker(&amp;waker);
+    
+    // 轮询`Future`
+    let mut fut = pin!(fut);
+    loop {
+        if let Poll::Ready(t) = fut.as_mut().poll(cx) {
+            return t;
+        }
+        
+        // 返回`Pending`就休眠线程，等待`waker`被调用
+        // 注：如果waker已经被调用过了，这里就不会阻塞。
+        parker.park()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>这就是<code>block_on</code>最基础的实现（当然如果在嵌入式里没有park/unpark，也只有单线程的情况下就另当别论），也是一个异步运行时最简单的形式。之后我们在这个基础上不断添加新的东西来完善它。</p>
+<p>有了<code>block_on</code>我们就可以写一个简单的异步程序了：</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    // 读一次stdin，并打印
+    let fut_a = async {
+        let mut buf = Box::&lt;[u8]&gt;::from([0;100]);
+        let mut i = 0;
+        (i, buf) = read_stdin(buf).await?;
+        println!(&quot;{:?}&quot;, String::from_utf8_lossy(&amp;buf[..i]));
+        Ok(())
+    };
+    
+    let fut_b = async {
+        yield_now().await;
+        println!(&quot;yield 1&quot;);
+        yield_now().await;
+        println!(&quot;yield 2&quot;);
+    };
+    
+    // 并发执行fut_a, fut_b
+    let fut = join(fut_a, fut_b);
+    
+    // 执行fut
+    block_on(fut);
+}</code></pre></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="Future的例子.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="Reactor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="Future的例子.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="Reactor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
